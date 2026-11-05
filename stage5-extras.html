@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage 5 - Optional extras</title>
+  <style>
+    /* Extra 1: skin the page */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #6fa8dc;
+      transition: background 0.5s;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    #icon { font-size: 80px; }
+    #temp { font-size: 40px; font-weight: bold; }
+    input, button { padding: 8px; font-size: 16px; margin-top: 8px; }
+    button { background: #1c4587; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="town"></h1>
+    <div id="icon"></div>
+    <p id="temp"></p>
+    <p id="weather"></p>
+    <p>Recorded: <span id="time"></span></p>
+
+    <!-- Extra 3: choose the town -->
+    <input id="townInput" placeholder="Type a town">
+    <button id="search">Search</button>
+    <button id="refresh">Refresh data</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    // Settings for the API (Brighton to start)
+    const CONFIG = {
+      town: "Brighton",
+      latitude: 50.8284,
+      longitude: -0.1395
+    };
+
+    // Build the API address from the settings
+    function buildUrl() {
+      return "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=" + CONFIG.latitude +
+        "&longitude=" + CONFIG.longitude +
+        "&current=temperature_2m,weather_code,wind_speed_10m" +
+        "&timezone=Europe%2FLondon";
+    }
+
+    // Turn "2026-10-28T12:45" into "28/10/2026 12:45"
+    function formatDate(isoString) {
+      const parts = isoString.split("T");
+      const date = parts[0].split("-");
+      return date[2] + "/" + date[1] + "/" + date[0] + " " + parts[1];
+    }
+
+    // Turn the weather code into words
+    function describeWeather(code) {
+      if (code === 0) return "Clear sky";
+      if (code <= 3) return "Cloudy";
+      if (code <= 48) return "Fog";
+      if (code <= 67) return "Rain";
+      if (code <= 77) return "Snow";
+      if (code <= 82) return "Rain showers";
+      return "Thunderstorm";
+    }
+
+    // Extra 2: a picture for the weather
+    function weatherIcon(code) {
+      if (code === 0) return "☀️";
+      if (code <= 3) return "⛅";
+      if (code <= 48) return "🌫️";
+      if (code <= 67) return "🌧️";
+      if (code <= 77) return "❄️";
+      if (code <= 82) return "🌦️";
+      return "⛈️";
+    }
+
+    // Extra 2: a background colour for the weather
+    function weatherColour(code) {
+      if (code === 0) return "#f6b26b";
+      if (code <= 3) return "#9fc5e8";
+      if (code <= 67) return "#6d7f99";
+      if (code <= 77) return "#d9e4f0";
+      return "#4c566a";
+    }
+
+    // Pick out the parts we want and show them
+    function showWeather(data) {
+      const code = data.current.weather_code;
+      document.getElementById("town").textContent = CONFIG.town;
+      document.getElementById("icon").textContent = weatherIcon(code);
+      document.getElementById("weather").textContent = describeWeather(code);
+      document.getElementById("temp").textContent = data.current.temperature_2m + " °C";
+      document.getElementById("time").textContent = formatDate(data.current.time);
+      document.body.style.background = weatherColour(code);
+    }
+
+    // Get the data from the API, then show it
+    async function loadWeather() {
+      const message = document.getElementById("message");
+      message.textContent = "Loading...";
+      try {
+        const response = await fetch(buildUrl());
+        const data = await response.json();
+        showWeather(data);
+        message.textContent = "";
+      } catch (error) {
+        message.textContent = "Could not load the weather.";
+      }
+    }
+
+    // Extra 3: find a town's location, then load its weather
+    async function searchTown() {
+      const name = document.getElementById("townInput").value;
+      const url = "https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(name);
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!data.results) {
+        document.getElementById("message").textContent = "Town not found.";
+        return;
+      }
+      CONFIG.town = data.results[0].name;
+      CONFIG.latitude = data.results[0].latitude;
+      CONFIG.longitude = data.results[0].longitude;
+      loadWeather();
+    }
+
+    loadWeather();
+    document.getElementById("refresh").addEventListener("click", loadWeather);
+    document.getElementById("search").addEventListener("click", searchTown);
+  </script>
+</body>
+</html>

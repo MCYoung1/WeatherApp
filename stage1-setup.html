@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stage 1 - Set up the API</title>
+</head>
+<body>
+  <h1>Stage 1: Set up the API</h1>
+
+  <p>Town: <span id="town"></span></p>
+  <p>API address: <a id="apiLink" target="_blank"></a></p>
+  <p>Click the link to see the raw weather data in a new tab.</p>
+
+  <script>
+    // Settings for the API, kept in one place.
+    // Open-Meteo needs no API key. If an API did need one,
+    // it would go here, e.g. apiKey: "your-key".
+    // Remember: anything in a web page can be seen in DevTools.
+    const CONFIG = {
+      town: "Brighton",
+      latitude: 50.8284,
+      longitude: -0.1395
+    };
+
+    // Build the API address from the settings
+    function buildUrl() {
+      return "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=" + CONFIG.latitude +
+        "&longitude=" + CONFIG.longitude +
+        "&current=temperature_2m,weather_code,wind_speed_10m" +
+        "&timezone=Europe%2FLondon";
+    }
+
+    // Show the town and the API link on the page
+    document.getElementById("town").textContent = CONFIG.town;
+    const link = document.getElementById("apiLink");
+    link.href = buildUrl();
+    link.textContent = buildUrl();
+  </script>
+</body>
+</html>

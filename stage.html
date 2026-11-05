@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brighton Weather</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f2f7ff;
+        margin: 0;
+        padding: 40px 20px;
+      }
+
+      .card {
+        max-width: 420px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        padding: 24px;
+        text-align: center;
+      }
+
+      h1 {
+        margin-top: 0;
+        color: #1f2937;
+      }
+
+      #temperature {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #2563eb;
+        margin: 20px 0;
+      }
+
+      .credit {
+        margin-top: 20px;
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Brighton Weather</h1>
+      <p id="status">Loading weather...</p>
+      <p id="temperature">--°C</p>
+      <p id="details">Checking conditions...</p>
+      <p class="credit">Weather data by Open-Meteo.com</p>
+    </div>
+
+    <script>
+      const CONFIG = {
+        town: "Brighton",
+        latitude: 50.8284,
+        longitude: -0.1395
+      };
+
+      // Build the Open-Meteo API URL for Brighton.
+      function buildWeatherUrl() {
+        return "https://api.open-meteo.com/v1/forecast" +
+          "?latitude=" + CONFIG.latitude +
+          "&longitude=" + CONFIG.longitude +
+          "&current=temperature_2m,weather_code,wind_speed_10m" +
+          "&timezone=Europe%2FLondon";
+      }
+
+      // Update the page with the weather information from the API response.
+      function showWeather(data) {
+        const current = data.current;
+        const temperature = Math.round(current.temperature_2m);
+        const wind = current.wind_speed_10m;
+
+        document.getElementById("status").textContent = "Weather for Brighton";
+        document.getElementById("temperature").textContent = temperature + "°C";
+        document.getElementById("details").textContent = "Wind: " + wind + " km/h";
+      }
+
+      // Show a simple message while the weather is loading.
+      function setLoadingMessage() {
+        document.getElementById("status").textContent = "Loading weather...";
+      }
+
+      // Fetch the weather data from Open-Meteo and update the page.
+      async function fetchWeather() {
+        setLoadingMessage();
+
+        try {
+          const response = await fetch(buildWeatherUrl());
+
+          if (!response.ok) {
+            throw new Error("Could not fetch weather data");
+          }
+
+          const data = await response.json();
+          showWeather(data);
+        } catch (error) {
+          document.getElementById("status").textContent = "Weather unavailable";
+          document.getElementById("details").textContent = "Please try again later.";
+          console.log(error);
+        }
+      }
+
+      fetchWeather();
+    </script>
+  </body>
+</html>

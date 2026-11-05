@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stage 4 - Refresh and format</title>
+</head>
+<body>
+  <h1>Weather in <span id="town"></span></h1>
+
+  <p>Weather: <span id="weather"></span></p>
+  <p>Temperature: <span id="temp"></span></p>
+  <p>Recorded: <span id="time"></span></p>
+
+  <button id="refresh">Refresh data</button>
+  <p id="message"></p>
+
+  <script>
+    // Settings for the API
+    const CONFIG = {
+      town: "Brighton",
+      latitude: 50.8284,
+      longitude: -0.1395
+    };
+
+    // Build the API address from the settings
+    function buildUrl() {
+      return "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=" + CONFIG.latitude +
+        "&longitude=" + CONFIG.longitude +
+        "&current=temperature_2m,weather_code,wind_speed_10m" +
+        "&timezone=Europe%2FLondon";
+    }
+
+    // Turn "2026-10-28T12:45" into "28/10/2026 12:45"
+    function formatDate(isoString) {
+      const parts = isoString.split("T");
+      const date = parts[0].split("-");
+      return date[2] + "/" + date[1] + "/" + date[0] + " " + parts[1];
+    }
+
+    // Turn the weather code into words
+    function describeWeather(code) {
+      if (code === 0) return "Clear sky";
+      if (code <= 3) return "Cloudy";
+      if (code <= 48) return "Fog";
+      if (code <= 67) return "Rain";
+      if (code <= 77) return "Snow";
+      if (code <= 82) return "Rain showers";
+      return "Thunderstorm";
+    }
+
+    // Pick out the parts we want and show them, formatted
+    function showWeather(data) {
+      document.getElementById("town").textContent = CONFIG.town;
+      document.getElementById("weather").textContent = describeWeather(data.current.weather_code);
+      document.getElementById("temp").textContent = data.current.temperature_2m + " °C";
+      document.getElementById("time").textContent = formatDate(data.current.time);
+    }
+
+    // Get the data from the API, then show it
+    async function loadWeather() {
+      const message = document.getElementById("message");
+      message.textContent = "Loading...";
+      try {
+        const response = await fetch(buildUrl());
+        const data = await response.json();
+        showWeather(data);
+        message.textContent = "";
+      } catch (error) {
+        message.textContent = "Could not load the weather.";
+      }
+    }
+
+    // Run when the page loads, and again when the button is clicked
+    loadWeather();
+    document.getElementById("refresh").addEventListener("click", loadWeather);
+  </script>
+</body>
+</html>
